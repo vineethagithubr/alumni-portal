@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Sent Messages - Alumni Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0 40px;
+            position: relative;
+        }
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .page-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .content-section {
+            padding: 40px 0;
+        }
+        .message-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid #764ba2;
+            transition: all 0.3s ease;
+        }
+        .message-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .receiver-info {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        .message-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .message-content {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .message-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-size: 0.85rem;
+        }
+        .status-read {
+            color: #28a745;
+        }
+        .status-unread {
+            color: #ffc107;
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: white;
+        }
+        .nav-tabs {
+            margin-bottom: 30px;
+        }
+        .nav-tabs .nav-link {
+            border-radius: 10px 10px 0 0;
+            border: none;
+            background: #e9ecef;
+            color: #666;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        .nav-tabs .nav-link.active {
+            background: #667eea;
+            color: white;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #999;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page-header">
+    <a href="/dashboard" class="back-button">
+        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+    </a>
+    
+    <div class="container">
+        <div class="text-center">
+            <h1 class="page-title">Sent Messages</h1>
+            <p class="page-subtitle">Messages you've sent to fellow alumni</p>
+        </div>
+    </div>
+</div>
+
+<div class="content-section">
+    <div class="container">
+        
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs" id="messageTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="inbox-tab" href="/messages/inbox">
+                    <i class="fas fa-inbox me-2"></i>Inbox
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="sent-tab" href="/messages/sent">
+                    <i class="fas fa-paper-plane me-2"></i>Sent Messages
+                </a>
+            </li>
+        </ul>
+
+        <!-- Messages -->
+        <div th:if="${#lists.isEmpty(messages)}" class="empty-state">
+            <i class="fas fa-paper-plane"></i>
+            <h3>No Sent Messages</h3>
+            <p>You haven't sent any private messages yet.</p>
+            <a href="/directory" class="btn btn-primary">
+                <i class="fas fa-users me-2"></i>Browse Alumni Directory
+            </a>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(messages)}">
+            <div th:each="message : ${messages}" class="message-card">
+                <div class="message-header">
+                    <div class="receiver-info">
+                        <i class="fas fa-user-circle me-2"></i>
+                        <span th:text="'To: ' + ${message.receiver.name}">Receiver Name</span>
+                    </div>
+                    <div class="message-date">
+                        <i class="fas fa-clock me-1"></i>
+                        <span th:text="${#temporals.format(message.sentDate, 'MMM dd, yyyy HH:mm')}">Date</span>
+                    </div>
+                </div>
+                
+                <div class="message-content" th:text="${message.content}">
+                    Message content goes here...
+                </div>
+                
+                <div class="message-status">
+                    <span th:class="${message.isRead ? 'status-read' : 'status-unread'}">
+                        <i th:class="${message.isRead ? 'fas fa-check-circle' : 'fas fa-clock'}" class="me-1"></i>
+                        <span th:text="${message.isRead ? 'Read' : 'Not read yet'}">Status</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

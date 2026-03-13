@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Alumni Directory - Alumni Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0 40px;
+            position: relative;
+        }
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="70" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+            background-size: 100px 100px;
+            animation: float 20s linear infinite;
+        }
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .page-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .content-section {
+            padding: 40px 0;
+        }
+        .filter-section {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .filter-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-filter {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .btn-clear {
+            background: #6c757d;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        .btn-clear:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+        }
+        .alumni-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        .alumni-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .alumni-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .alumni-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        .alumni-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+            color: white;
+        }
+        .alumni-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .alumni-info {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .info-item i {
+            color: #667eea;
+            margin-right: 8px;
+            width: 20px;
+        }
+        .alumni-stats {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: #999;
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: white;
+        }
+        .results-info {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        .results-count {
+            font-size: 1.1rem;
+            color: #333;
+            font-weight: 600;
+        }
+        .active-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .filter-tag {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #999;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        @keyframes float {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(100px); }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page-header">
+    <a href="/dashboard" class="back-button">
+        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+    </a>
+    
+    <div class="container">
+        <div class="header-content text-center">
+            <h1 class="page-title">Alumni Directory</h1>
+            <p class="page-subtitle">Connect with fellow graduates from your alma mater</p>
+        </div>
+    </div>
+</div>
+
+<div class="content-section">
+    <div class="container">
+        
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <h3 class="filter-title">
+                <i class="fas fa-filter me-2"></i>Filter Alumni
+            </h3>
+            
+            <form th:action="@{/directory}" method="get">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-search me-2"></i>Search by Name
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="name" 
+                               name="name" 
+                               th:value="${searchName}"
+                               placeholder="Enter name to search...">
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="branch" class="form-label">
+                            <i class="fas fa-graduation-cap me-2"></i>Branch
+                        </label>
+                        <select class="form-select" id="branch" name="branch">
+                            <option value="">All Branches</option>
+                            <option value="Computer Science" th:selected="${selectedBranch == 'Computer Science'}">Computer Science</option>
+                            <option value="Electronics" th:selected="${selectedBranch == 'Electronics'}">Electronics</option>
+                            <option value="Mechanical" th:selected="${selectedBranch == 'Mechanical'}">Mechanical</option>
+                            <option value="Civil" th:selected="${selectedBranch == 'Civil'}">Civil</option>
+                            <option value="Electrical" th:selected="${selectedBranch == 'Electrical'}">Electrical</option>
+                            <option value="Information Technology" th:selected="${selectedBranch == 'Information Technology'}">Information Technology</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="passoutYear" class="form-label">
+                            <i class="fas fa-calendar-alt me-2"></i>Passout Year
+                        </label>
+                        <select class="form-select" id="passoutYear" name="passoutYear">
+                            <option value="">All Years</option>
+                            <option th:each="year : ${#numbers.sequence(2024, 1950, -1)}" 
+                                    th:value="${year}" 
+                                    th:text="${year}"
+                                    th:selected="${selectedYear == year}">Year</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3 d-flex align-items-end">
+                        <div class="d-flex gap-2 w-100">
+                            <button type="submit" class="btn btn-filter flex-fill">
+                                <i class="fas fa-search me-2"></i>Search
+                            </button>
+                            <a href="/directory" class="btn btn-clear">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Info -->
+        <div class="results-info">
+            <div class="results-count">
+                <i class="fas fa-users me-2"></i>
+                Found <span th:text="${#lists.size(users)}">0</span> alumni
+            </div>
+            <div class="active-filters" th:if="${selectedBranch or selectedYear or searchName}">
+                <span class="filter-tag" th:if="${searchName}">
+                    <i class="fas fa-search me-1"></i>
+                    <span th:text="${searchName}">Name</span>
+                </span>
+                <span class="filter-tag" th:if="${selectedBranch}">
+                    <i class="fas fa-graduation-cap me-1"></i>
+                    <span th:text="${selectedBranch}">Branch</span>
+                </span>
+                <span class="filter-tag" th:if="${selectedYear}">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    <span th:text="${selectedYear}">Year</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Alumni Grid -->
+        <div th:if="${#lists.isEmpty(users)}" class="empty-state">
+            <i class="fas fa-users"></i>
+            <h3>No Alumni Found</h3>
+            <p>Try adjusting your filters or check back later for new additions.</p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(users)}" class="alumni-grid">
+            <div th:each="user : ${users}" class="alumni-card">
+                <div class="alumni-avatar">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                
+                <div class="alumni-name" th:text="${user.name}">John Doe</div>
+                
+                <div class="alumni-info">
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <span th:text="${user.email}">email@example.com</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span th:text="${user.branch}">Computer Science</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span th:text="${user.passoutYear}">2020</span>
+                    </div>
+                </div>
+                
+                <div class="alumni-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" th:text="${#strings.substring(user.passoutYear, 2)}">20</div>
+                        <div class="stat-label">Batch</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" th:text="${#strings.length(user.branch)}">CS</div>
+                        <div class="stat-label">Branch</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">Active</div>
+                        <div class="stat-label">Status</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

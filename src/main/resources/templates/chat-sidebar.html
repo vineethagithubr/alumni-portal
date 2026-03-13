@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chat Sidebar Component</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chat-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-sidebar.open {
+            right: 0;
+        }
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chat-user-info {
+            display: flex;
+            align-items: center;
+        }
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        .chat-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .chat-status {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+        .chat-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .chat-close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .message-bubble {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-end;
+        }
+        .message-bubble.sent {
+            justify-content: flex-end;
+        }
+        .message-bubble.received {
+            justify-content: flex-start;
+        }
+        .bubble {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+        .bubble.sent {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        .bubble.received {
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+            border-bottom-left-radius: 5px;
+        }
+        .message-time {
+            font-size: 0.7rem;
+            color: #999;
+            margin-top: 5px;
+        }
+        .message-bubble.sent .message-time {
+            text-align: right;
+        }
+        .chat-input-container {
+            padding: 15px 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input {
+            flex: 1;
+            border: 1px solid #e9ecef;
+            border-radius: 20px;
+            padding: 10px 15px;
+            resize: none;
+            font-size: 0.9rem;
+        }
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .chat-send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .chat-send-btn:hover {
+            transform: scale(1.1);
+        }
+        .chat-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            z-index: 1040;
+        }
+        .chat-toggle:hover {
+            transform: scale(1.1);
+        }
+        .chat-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #28a745;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .empty-chat {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        .empty-chat i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Chat Toggle Button -->
+<div class="chat-toggle" onclick="toggleChat()">
+    <i class="fas fa-comments fa-lg"></i>
+    <span class="chat-badge" th:if="${unreadCount > 0}" th:text="${unreadCount > 99 ? '99+' : unreadCount}">0</span>
+</div>
+
+<!-- Chat Sidebar -->
+<div class="chat-sidebar" id="chatSidebar">
+    <div class="chat-header">
+        <div class="chat-user-info">
+            <div class="chat-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div>
+                <div class="chat-name" th:text="${chatUser != null ? chatUser.name : 'Select User'}">Chat</div>
+                <div class="chat-status" th:text="${chatUser != null ? 'Online' : 'Click user to chat'}">Status</div>
+            </div>
+        </div>
+        <button class="chat-close" onclick="toggleChat()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <div th:if="${chatUser == null}" class="empty-chat">
+            <i class="fas fa-comments"></i>
+            <p>Select a user from the directory to start chatting</p>
+        </div>
+        
+        <div th:if="${chatUser != null}">
+            <!-- Messages will be loaded here -->
+            <div th:each="msg : ${chatMessages}" class="message-bubble" th:classappend="${msg.sender.id == currentUser.id ? 'sent' : 'received'}">
+                <div class="bubble" th:text="${msg.content}">
+                    Message content
+                </div>
+                <div class="message-time" th:text="${#temporals.format(msg.sentDate, 'HH:mm')}">Time</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-input-container" th:if="${chatUser != null}">
+        <form th:action="@{/messages/send}" method="post" id="chatForm">
+            <input type="hidden" name="receiverId" th:value="${chatUser.id}">
+            <div class="chat-input-wrapper">
+                <textarea 
+                    name="content" 
+                    class="chat-input" 
+                    placeholder="Type a message..." 
+                    rows="1"
+                    onkeypress="handleKeyPress(event)"></textarea>
+                <button type="submit" class="chat-send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleChat() {
+    const sidebar = document.getElementById('chatSidebar');
+    sidebar.classList.toggle('open');
+}
+
+function handleKeyPress(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        document.getElementById('chatForm').submit();
+    }
+}
+
+// Auto-scroll to bottom of messages
+function scrollToBottom() {
+    const messagesContainer = document.getElementById('chatMessages');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Scroll to bottom when messages load
+document.addEventListener('DOMContentLoaded', function() {
+    scrollToBottom();
+});
+</script>
+
+</body>
+</html>

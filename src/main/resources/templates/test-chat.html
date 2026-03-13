@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Test Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .test-profile {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin: 10px;
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+        .test-profile:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <h2>Test Profile Style</h2>
+    <div style="display: flex;">
+        <div class="test-profile">A</div>
+        <div class="test-profile">B</div>
+        <div class="test-profile">C</div>
+    </div>
+    <p>If you see circular profiles above, the CSS works.</p>
+</body>
+</html>
