@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </linearGradient>
+    <filter id="strongShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.5"/>
+    </filter>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Strong white background circle with border -->
+  <circle cx="30" cy="30" r="26" fill="white" stroke="#000000" stroke-width="2" filter="url(#strongShadow)"/>
+  
+  <!-- Inner circle for extra contrast -->
+  <circle cx="30" cy="30" r="24" fill="#f8f9fa" stroke="none"/>
+  
+  <!-- Graduation Cap -->
+  <g transform="translate(10, 15)">
+    <!-- Cap Base -->
+    <path d="M 0 15 L 20 5 L 40 15 L 20 25 Z" fill="url(#logoGradient)" stroke="#ffffff" stroke-width="0.5" />
+    <!-- Cap Top -->
+    <rect x="18" y="0" width="4" height="15" fill="url(#logoGradient)" />
+    <!-- Tassel -->
+    <circle cx="20" cy="0" r="2.5" fill="#667eea" stroke="#ffffff" stroke-width="0.5" />
+    <path d="M 20 2.5 Q 26 9 23 13" stroke="#667eea" stroke-width="2" fill="none" stroke-linecap="round" />
+  </g>
+  
+  <!-- Alumsphere Text -->
+  <text x="60" y="25" font-family="Arial, sans-serif" font-size="20" font-weight="900" fill="#000000" filter="url(#glow)">
+    Alumsphere
+  </text>
+  
+  <!-- Text outline for extra visibility -->
+  <text x="60" y="25" font-family="Arial, sans-serif" font-size="20" font-weight="900" fill="none" stroke="#ffffff" stroke-width="0.5">
+    Alumsphere
+  </text>
+  
+  <!-- Tagline -->
+  <text x="60" y="42" font-family="Arial, sans-serif" font-size="9" fill="#1a1a1a" letter-spacing="1" font-weight="700">
+    CONNECT • GROW • SUCCEED
+  </text>
+</svg>

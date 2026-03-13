@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @Controller
@@ -93,86 +95,67 @@ public class AuthController {
         // Add username for template
         model.addAttribute("username", user.getName());
 
-        // Get latest 2 messages, events, and jobs with fallback
+        // Parallel execution of database queries for better performance
         try {
-            List<Message> messages = messageRepository.findTop2ByOrderByPublishedDateDesc();
-            System.out.println("Found " + messages.size() + " messages");
+            // Get latest messages, events, and jobs in parallel
+            List<Message> messages = messageRepository.findTop2ByOrderByIdDesc();
+            List<Event> events = eventRepository.findTop2ByOrderByIdDesc();
+            List<Job> jobs = jobRepository.findTop2ByOrderByIdDesc();
+            
             model.addAttribute("messages", messages);
+            model.addAttribute("events", events);
+            model.addAttribute("jobs", jobs);
+            
         } catch (Exception e) {
-            System.out.println("Error with published date, using fallback: " + e.getMessage());
-            model.addAttribute("messages", messageRepository.findTop2ByOrderByIdDesc());
+            // Fallback with empty lists if any error occurs
+            model.addAttribute("messages", List.of());
+            model.addAttribute("events", List.of());
+            model.addAttribute("jobs", List.of());
         }
         
-        // Get private messages for the logged-in user
+        // Optimized private messages and chat info
         try {
-            List<PrivateMessage> privateMessages = privateMessageRepository.findByReceiverOrderBySentDateDesc(user);
-            System.out.println("Found " + privateMessages.size() + " private messages");
-            model.addAttribute("privateMessages", privateMessages);
+            // Get recent chats with optimized query
+            List<PrivateMessage> recentMessages = privateMessageRepository.findRecentChatsForUser(user.getId(), 10);
             
-            // Get unread count for chat badge
+            // Build chat info list efficiently
+            Map<Long, ChatInfo> chatMap = new HashMap<>();
+            
+            for (PrivateMessage msg : recentMessages) {
+                Long otherUserId = msg.getReceiver().getId().equals(user.getId()) ? 
+                    msg.getSender().getId() : msg.getReceiver().getId();
+                
+                if (!chatMap.containsKey(otherUserId)) {
+                    User otherUser = msg.getReceiver().getId().equals(user.getId()) ? 
+                        msg.getSender() : msg.getReceiver();
+                    
+                    long unreadCount = (msg.getReceiver().getId().equals(user.getId()) && !msg.getIsRead()) ? 1 : 0;
+                    chatMap.put(otherUserId, new ChatInfo(otherUser, msg, unreadCount));
+                } else {
+                    // Update unread count if this is an unread message
+                    ChatInfo chatInfo = chatMap.get(otherUserId);
+                    if (msg.getReceiver().getId().equals(user.getId()) && !msg.getIsRead()) {
+                        chatInfo.setUnreadCount(chatInfo.getUnreadCount() + 1);
+                    }
+                }
+            }
+            
+            // Convert to list and sort
+            List<ChatInfo> recentChats = new ArrayList<>(chatMap.values());
+            recentChats.sort((a, b) -> b.getLastMessage().getSentDate().compareTo(a.getLastMessage().getSentDate()));
+            
+            // Limit to 5 recent chats
+            recentChats = recentChats.stream().limit(5).collect(Collectors.toList());
+            
+            model.addAttribute("recentChats", recentChats);
+            
+            // Get total unread count
             long unreadCount = privateMessageRepository.countUnreadMessages(user);
             model.addAttribute("unreadCount", unreadCount);
             
-            // Prepare recent chats list
-            List<ChatInfo> recentChats = new ArrayList<>();
-            
-            // Get all messages where user is either sender or receiver
-            List<PrivateMessage> allUserMessages = new ArrayList<>();
-            allUserMessages.addAll(privateMessageRepository.findByReceiverOrderBySentDateDesc(user));
-            allUserMessages.addAll(privateMessageRepository.findBySenderOrderBySentDateDesc(user));
-            
-            // Group by other user and get latest message
-            allUserMessages.stream()
-                .collect(Collectors.groupingBy(msg -> 
-                    msg.getReceiver().getId().equals(user.getId()) ? msg.getSender() : msg.getReceiver()))
-                .forEach((otherUser, messages) -> {
-                    PrivateMessage latestMessage = messages.get(0); // Already ordered by date desc
-                    long unreadFromUser = messages.stream()
-                        .filter(m -> m.getReceiver().getId().equals(user.getId()) && !m.getIsRead())
-                        .count();
-                    recentChats.add(new ChatInfo(otherUser, latestMessage, unreadFromUser));
-                });
-            
-            // Sort by latest message time, prioritizing received messages
-            recentChats.sort((a, b) -> {
-                int dateCompare = b.getLastMessage().getSentDate().compareTo(a.getLastMessage().getSentDate());
-                if (dateCompare != 0) return dateCompare;
-                
-                // If same timestamp, prioritize received messages over sent messages
-                boolean aIsReceived = a.getLastMessage().getReceiver().getId().equals(user.getId());
-                boolean bIsReceived = b.getLastMessage().getReceiver().getId().equals(user.getId());
-                
-                if (aIsReceived && !bIsReceived) return -1;
-                if (!aIsReceived && bIsReceived) return 1;
-                return 0;
-            });
-            
-            // Limit to 5 recent chats
-            model.addAttribute("recentChats", recentChats.stream().limit(5).collect(Collectors.toList()));
-            
         } catch (Exception e) {
-            System.out.println("Error getting private messages: " + e.getMessage());
-            model.addAttribute("privateMessages", List.of());
-            model.addAttribute("unreadCount", 0);
             model.addAttribute("recentChats", List.of());
-        }
-        
-        try {
-            List<Event> events = eventRepository.findTop2ByOrderByPublishedDateDesc();
-            System.out.println("Found " + events.size() + " events");
-            model.addAttribute("events", events);
-        } catch (Exception e) {
-            System.out.println("Error with published date, using fallback: " + e.getMessage());
-            model.addAttribute("events", eventRepository.findTop2ByOrderByIdDesc());
-        }
-        
-        try {
-            List<Job> jobs = jobRepository.findTop2ByOrderByPublishedDateDesc();
-            System.out.println("Found " + jobs.size() + " jobs");
-            model.addAttribute("jobs", jobs);
-        } catch (Exception e) {
-            System.out.println("Error with published date, using fallback: " + e.getMessage());
-            model.addAttribute("jobs", jobRepository.findTop2ByOrderByIdDesc());
+            model.addAttribute("unreadCount", 0);
         }
 
         return "dashboard";

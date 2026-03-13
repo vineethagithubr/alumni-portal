@@ -2,19 +2,24 @@ package com.alumni.alumni_portal.repository;
 
 import com.alumni.alumni_portal.model.PrivateMessage;
 import com.alumni.alumni_portal.model.User;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface PrivateMessageRepository extends JpaRepository<PrivateMessage, Long> {
 
+    @Cacheable(value = "privateMessages", key = "#receiver.id")
     List<PrivateMessage> findByReceiverOrderBySentDateDesc(User receiver);
     
+    @Cacheable(value = "privateMessages", key = "#sender.id")
     List<PrivateMessage> findBySenderOrderBySentDateDesc(User sender);
     
     List<PrivateMessage> findByReceiverAndIsReadOrderBySentDateDesc(User receiver, Boolean isRead);
     
+    @Cacheable(value = "messages")
     List<PrivateMessage> findAllByOrderBySentDateDesc();
     
     @Query("SELECT m FROM PrivateMessage m WHERE (m.sender = :user1 AND m.receiver = :user2) OR (m.sender = :user2 AND m.receiver = :user1) ORDER BY m.sentDate ASC")
@@ -22,4 +27,7 @@ public interface PrivateMessageRepository extends JpaRepository<PrivateMessage, 
     
     @Query("SELECT COUNT(m) FROM PrivateMessage m WHERE m.receiver = :user AND m.isRead = false")
     long countUnreadMessages(User user);
+    
+    @Query("SELECT m FROM PrivateMessage m WHERE (m.sender.id = :userId OR m.receiver.id = :userId) ORDER BY m.sentDate DESC LIMIT :limit")
+    List<PrivateMessage> findRecentChatsForUser(@Param("userId") Long userId, @Param("limit") int limit);
 }
