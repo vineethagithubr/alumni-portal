@@ -5,6 +5,8 @@ import com.alumni.alumni_portal.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserService {
 
@@ -16,12 +18,16 @@ public class UserService {
     }
 
     public User login(String email, String password){
-        User user = userRepository.findByEmail(email);
-
-        if(user != null && user.getPassword().equals(password)){
-            return user;
+        List<User> users = userRepository.findByEmail(email);
+        
+        if(users != null && !users.isEmpty()){
+            for(User user : users){
+                if(user.getPassword().equals(password)){
+                    return user;
+                }
+            }
         }
-
+        
         return null;
     }
 }
