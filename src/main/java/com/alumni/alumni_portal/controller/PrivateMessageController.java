@@ -5,11 +5,13 @@ import com.alumni.alumni_portal.model.PrivateMessage;
 import com.alumni.alumni_portal.model.User;
 import com.alumni.alumni_portal.repository.PrivateMessageRepository;
 import com.alumni.alumni_portal.repository.UserRepository;
+import com.alumni.alumni_portal.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +26,9 @@ public class PrivateMessageController {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/messages/new/{receiverId}")
     public String newPrivateMessage(@PathVariable Long receiverId, Model model, HttpSession session) {
@@ -104,8 +109,12 @@ public class PrivateMessageController {
         // Sort by latest message time
         recentChats.sort((a, b) -> b.getLastMessage().getSentDate().compareTo(a.getLastMessage().getSentDate()));
         
+        // Check if user is admin
+        boolean isAdmin = userService.isAdmin(user);
+        
         model.addAttribute("recentChats", recentChats);
         model.addAttribute("user", user);
+        model.addAttribute("isAdmin", isAdmin);
         
         return "inbox-new";
     }
@@ -120,8 +129,13 @@ public class PrivateMessageController {
         }
         
         List<PrivateMessage> messages = privateMessageRepository.findBySenderOrderBySentDateDesc(user);
+        
+        // Check if user is admin
+        boolean isAdmin = userService.isAdmin(user);
+        
         model.addAttribute("messages", messages);
         model.addAttribute("user", user);
+        model.addAttribute("isAdmin", isAdmin);
         
         return "sent-messages";
     }
@@ -139,6 +153,32 @@ public class PrivateMessageController {
         if (message != null && message.getReceiver().getId().equals(user.getId())) {
             message.setIsRead(true);
             privateMessageRepository.save(message);
+        }
+        
+        return "redirect:/messages/inbox";
+    }
+    
+    @PostMapping("/messages/private/delete/{messageId}")
+    public String deletePrivateMessage(@PathVariable Long messageId, HttpSession session, RedirectAttributes redirectAttributes) {
+        
+        User user = (User) session.getAttribute("loggedUser");
+        
+        if (user == null) {
+            return "redirect:/login";
+        }
+        
+        // Check if user is admin
+        if (!userService.isAdmin(user)) {
+            redirectAttributes.addFlashAttribute("error", "Access denied. Admin privileges required.");
+            return "redirect:/messages/inbox";
+        }
+        
+        PrivateMessage message = privateMessageRepository.findById(messageId).orElse(null);
+        if (message != null) {
+            privateMessageRepository.deleteById(messageId);
+            redirectAttributes.addFlashAttribute("success", "Private message deleted successfully.");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Message not found.");
         }
         
         return "redirect:/messages/inbox";

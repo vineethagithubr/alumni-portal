@@ -82,8 +82,17 @@
         .message-bubble.received {
             justify-content: flex-start;
         }
-        .bubble {
+        .bubble-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
             max-width: 70%;
+        }
+        .bubble-wrapper.sent {
+            flex-direction: row-reverse;
+        }
+        .bubble {
+            flex: 1;
             padding: 12px 18px;
             border-radius: 18px;
             word-wrap: break-word;
@@ -106,6 +115,17 @@
         }
         .message-bubble.sent .message-time {
             text-align: right;
+        }
+        .message-actions {
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        .message-actions:hover {
+            opacity: 1;
+        }
+        .message-actions .btn {
+            padding: 4px 8px;
+            font-size: 0.7rem;
         }
         .chat-input-container {
             padding: 20px 25px;
@@ -189,8 +209,17 @@
         
         <div th:if="${chatUser != null and !#lists.isEmpty(chatMessages)}">
             <div th:each="msg : ${chatMessages}" class="message-bubble" th:classappend="${msg.sender.id == currentUser.id ? 'sent' : 'received'}">
-                <div class="bubble" th:text="${msg.content}">
-                    Message content
+                <div class="bubble-wrapper">
+                    <div class="bubble" th:text="${msg.content}">
+                        Message content
+                    </div>
+                    <div class="message-actions" th:if="${isAdmin}">
+                        <form th:action="@{/messages/private/delete/{id}(id=${msg.id})}" method="post" onsubmit="return confirm('Are you sure you want to delete this message? This action cannot be undone.')" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Message">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 <div class="message-time" th:text="${#temporals.format(msg.sentDate, 'MMM dd, HH:mm')}">Time</div>
             </div>
@@ -219,19 +248,68 @@
 function handleKeyPress(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        document.getElementById('chatForm').submit();
+        submitMessage();
     }
+}
+
+// Submit message and refresh page
+function submitMessage() {
+    const form = document.getElementById('chatForm');
+    const messageInput = document.querySelector('textarea[name="content"]');
+    const messageContent = messageInput.value.trim();
+    
+    if (!messageContent) {
+        return;
+    }
+    
+    // Submit the form normally
+    form.submit();
 }
 
 // Auto-scroll to bottom of messages
 function scrollToBottom() {
     const messagesContainer = document.getElementById('chatMessages');
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    if (messagesContainer) {
+        setTimeout(() => {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }, 100);
+    }
 }
 
-// Scroll to bottom when messages load
+// Auto-refresh chat every 3 seconds
+function startAutoRefresh() {
+    setInterval(() => {
+        // Check if user is not typing
+        const messageInput = document.querySelector('textarea[name="content"]');
+        if (!messageInput || messageInput !== document.activeElement) {
+            // Refresh the page
+            window.location.reload();
+        }
+    }, 3000);
+}
+
+// Initialize
 document.addEventListener('DOMContentLoaded', function() {
+    // Scroll to bottom
     scrollToBottom();
+    
+    // Focus on message input
+    const messageInput = document.querySelector('textarea[name="content"]');
+    if (messageInput) {
+        messageInput.focus();
+    }
+    
+    // Override form submission
+    const form = document.getElementById('chatForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitMessage();
+        });
+    }
+    
+    // Start auto-refresh after 2 seconds
+    setTimeout(startAutoRefresh, 2000);
 });
 </script>
 

@@ -11,4 +11,10 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     
     // Fallback method if publishedDate is null
     List<Job> findTop2ByOrderByIdDesc();
+    
+    // Methods to fetch all jobs
+    List<Job> findAllByOrderByPublishedDateDesc();
+    
+    // Fallback method if publishedDate is null
+    List<Job> findAllByOrderByIdDesc();
 }

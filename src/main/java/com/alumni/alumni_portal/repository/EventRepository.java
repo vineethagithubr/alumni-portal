@@ -11,4 +11,10 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     
     // Fallback method if publishedDate is null
     List<Event> findTop2ByOrderByIdDesc();
+    
+    // Methods to fetch all events
+    List<Event> findAllByOrderByPublishedDateDesc();
+    
+    // Fallback method if publishedDate is null
+    List<Event> findAllByOrderByIdDesc();
 }

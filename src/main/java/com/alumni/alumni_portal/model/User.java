@@ -18,6 +18,14 @@ public class User {
     @Column(name = "passout_year")
     private int passoutYear;
 
+    @Column(nullable = true)
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.USER;
+
+    public enum Role {
+        ADMIN, USER
+    }
+
     public User() {}
 
     public Long getId() {
@@ -66,5 +74,13 @@ public class User {
 
     public void setPassoutYear(int passoutYear) {
         this.passoutYear = passoutYear;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

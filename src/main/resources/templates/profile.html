@@ -131,6 +131,15 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
         }
+        .btn-password {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border: none;
+            color: white;
+        }
+        .btn-password:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 123, 255, 0.3);
+        }
         .back-button {
             position: absolute;
             top: 20px;
@@ -252,6 +261,9 @@
         <div class="action-buttons">
             <a href="/profile/edit" class="btn btn-action btn-edit">
                 <i class="fas fa-edit me-2"></i>Edit Profile
+            </a>
+            <a href="/change-password" class="btn btn-action btn-password">
+                <i class="fas fa-lock me-2"></i>Change Password
             </a>
             <a href="/dashboard" class="btn btn-action btn-back">
                 <i class="fas fa-home me-2"></i>Dashboard

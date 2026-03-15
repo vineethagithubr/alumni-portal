@@ -196,6 +196,19 @@
 <div class="content-section">
     <div class="container">
         
+        <!-- Flash Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
         <div th:if="${#lists.isEmpty(jobs)}" class="empty-state">
             <i class="fas fa-briefcase"></i>
             <h3>No Job Postings Yet</h3>
@@ -210,6 +223,13 @@
                 <div>
                     <h3 class="company-name" th:text="${job.company}">Company Name</h3>
                     <div class="job-role" th:text="${job.role}">Job Role</div>
+                </div>
+                <div th:if="${isAdmin}" class="job-actions-admin">
+                    <form th:action="@{/jobs/delete/{id}(id=${job.id})}" method="post" onsubmit="return confirm('Are you sure you want to delete this job posting? This action cannot be undone.')" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Job">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
             

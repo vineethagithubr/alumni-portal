@@ -4,6 +4,7 @@ import com.alumni.alumni_portal.model.PrivateMessage;
 import com.alumni.alumni_portal.model.User;
 import com.alumni.alumni_portal.repository.PrivateMessageRepository;
 import com.alumni.alumni_portal.repository.UserRepository;
+import com.alumni.alumni_portal.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -21,6 +22,9 @@ public class ChatController {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/chat/{userId}")
     public String openChat(@PathVariable Long userId, Model model, HttpSession session) {
@@ -47,13 +51,17 @@ public class ChatController {
                 privateMessageRepository.save(m);
             });
         
+        // Get unread count for badge
+        long unreadCount = privateMessageRepository.countUnreadMessages(currentUser);
+        
+        // Check if user is admin
+        boolean isAdmin = userService.isAdmin(currentUser);
+        
         model.addAttribute("chatUser", chatUser);
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("chatMessages", messages);
-        
-        // Get unread count for badge
-        long unreadCount = privateMessageRepository.countUnreadMessages(currentUser);
         model.addAttribute("unreadCount", unreadCount);
+        model.addAttribute("isAdmin", isAdmin);
         
         return "chat";
     }

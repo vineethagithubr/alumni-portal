@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.ArrayList;
@@ -94,6 +95,14 @@ public class AuthController {
 
         // Add username for template
         model.addAttribute("username", user.getName());
+        
+        // Check if user is admin
+        boolean isAdmin = userService.isAdmin(user);
+        model.addAttribute("isAdmin", isAdmin);
+        
+        // Debug: Add user role info for debugging
+        model.addAttribute("userRole", user.getRole());
+        model.addAttribute("userId", user.getId());
 
         // Parallel execution of database queries for better performance
         try {
@@ -159,5 +168,74 @@ public class AuthController {
         }
 
         return "dashboard";
+    }
+    
+    @GetMapping("/change-password")
+    public String showChangePasswordForm(Model model, HttpSession session) {
+        User user = (User) session.getAttribute("loggedUser");
+        
+        if(user == null){
+            return "redirect:/login";
+        }
+        
+        model.addAttribute("user", user);
+        return "change-password";
+    }
+    
+    @PostMapping("/change-password")
+    public String changePassword(
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword,
+            @RequestParam String confirmPassword,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        
+        User user = (User) session.getAttribute("loggedUser");
+        
+        if(user == null){
+            return "redirect:/login";
+        }
+        
+        // Validate input
+        if (currentPassword == null || currentPassword.trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Current password is required.");
+            return "redirect:/change-password";
+        }
+        
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "New password is required.");
+            return "redirect:/change-password";
+        }
+        
+        if (confirmPassword == null || confirmPassword.trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Please confirm your new password.");
+            return "redirect:/change-password";
+        }
+        
+        if (!newPassword.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("error", "New passwords do not match.");
+            return "redirect:/change-password";
+        }
+        
+        if (newPassword.length() < 6) {
+            redirectAttributes.addFlashAttribute("error", "New password must be at least 6 characters long.");
+            return "redirect:/change-password";
+        }
+        
+        // Verify current password
+        if (!userService.verifyPassword(user, currentPassword)) {
+            redirectAttributes.addFlashAttribute("error", "Current password is incorrect.");
+            return "redirect:/change-password";
+        }
+        
+        // Update password
+        try {
+            userService.updatePassword(user, newPassword);
+            redirectAttributes.addFlashAttribute("success", "Password changed successfully!");
+            return "redirect:/profile";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error changing password. Please try again.");
+            return "redirect:/change-password";
+        }
     }
 }
