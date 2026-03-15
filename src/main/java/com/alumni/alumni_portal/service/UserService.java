@@ -66,4 +66,9 @@ public class UserService {
         user.setPassword(newPassword);
         userRepository.save(user);
     }
+    
+    public boolean emailExists(String email) {
+        List<User> users = userRepository.findByEmail(email);
+        return users != null && !users.isEmpty();
+    }
 }

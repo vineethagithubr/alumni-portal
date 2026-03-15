@@ -5,7 +5,9 @@ import com.alumni.alumni_portal.repository.*;
 import com.alumni.alumni_portal.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -158,6 +160,7 @@ public class AdminController {
 
     // Delete operations
     @PostMapping("/public-messages/delete/{messageId}")
+    @CacheEvict(value = "messages", allEntries = true)
     public String deletePublicMessage(@PathVariable Long messageId, HttpSession session, RedirectAttributes redirectAttributes) {
         if (!isAdmin(session)) {
             redirectAttributes.addFlashAttribute("error", "Access denied. Admin privileges required.");
@@ -194,6 +197,7 @@ public class AdminController {
     }
 
     @PostMapping("/users/delete/{userId}")
+    @Transactional
     public String deleteUser(@PathVariable Long userId, HttpSession session, RedirectAttributes redirectAttributes) {
         if (!isAdmin(session)) {
             redirectAttributes.addFlashAttribute("error", "Access denied. Admin privileges required.");
@@ -206,8 +210,24 @@ public class AdminController {
             return "redirect:/admin/users";
         }
 
-        userService.deleteUser(userId);
-        redirectAttributes.addFlashAttribute("success", "User deleted successfully.");
+        try {
+            // First, delete related private messages for this user
+            User userToDelete = userRepository.findById(userId).orElse(null);
+            if (userToDelete != null) {
+                // Delete private messages sent by or to this user
+                privateMessageRepository.deleteAllBySenderId(userId);
+                privateMessageRepository.deleteAllByReceiverId(userId);
+                
+                // Now delete the user
+                userService.deleteUser(userId);
+                redirectAttributes.addFlashAttribute("success", "User deleted successfully.");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "User not found.");
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error deleting user: " + e.getMessage());
+        }
+        
         return "redirect:/admin/users";
     }
     

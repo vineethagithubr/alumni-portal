@@ -30,4 +30,8 @@ public interface PrivateMessageRepository extends JpaRepository<PrivateMessage, 
     
     @Query("SELECT m FROM PrivateMessage m WHERE (m.sender.id = :userId OR m.receiver.id = :userId) ORDER BY m.sentDate DESC LIMIT :limit")
     List<PrivateMessage> findRecentChatsForUser(@Param("userId") Long userId, @Param("limit") int limit);
+    
+    // Methods for user deletion cleanup
+    void deleteAllBySenderId(Long senderId);
+    void deleteAllByReceiverId(Long receiverId);
 }

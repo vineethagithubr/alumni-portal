@@ -46,10 +46,15 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@ModelAttribute User user){
+    public String registerUser(@ModelAttribute User user, RedirectAttributes redirectAttributes, Model model){
+
+        // Check if email already exists
+        if (userService.emailExists(user.getEmail())) {
+            model.addAttribute("error", "Email already registered. Please use a different email or login.");
+            return "register";
+        }
 
         userService.registerUser(user);
-
         return "register-success";
     }
 
